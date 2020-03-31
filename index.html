@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title></title>
+    <style>
+        #main{
+            width:1000px;
+            float:left;
+        }
+        .pawn{
+            width:30px;
+            height:30px;
+            border-radius:20px;
+            position:absolute;
+        }
+        #board{
+            background:url(images/ludoboard2.png) no-repeat;
+            background-size:cover;
+            width:750px;
+            height:700px;
+            float:left;
+            margin-top:8px;
+        }
+        #uselesstext1{
+            float:left;
+            padding-left:10px;
+            padding-right:10px;
+        }
+        footer{
+            font-size:larger;
+            color:darkred;
+        }
+        #dice{
+            position: relative;
+            margin-top: 200px;
+            margin-left: 780px;
+            font-size: 3em;
+        }
+    </style>
+    <!--
+    <script src="Ludo-game.js"></script>
+    <script src="resetGame.js"></script>-->
+    <script src="game.js"></script>
+    <script src="states.js"></script>
+
+</head>
+<body>
+
+    <div id="main">
+            
+        
+    <div class="pawn" id="redpawn1" style="background-color:red;top:624px;left:187px;"></div>
+    <div class="pawn" id="redpawn2" style="background-color:red;top:590px;left:221px;"></div>
+    <div class="pawn" id="redpawn3" style="background-color:red;top:659px;left:221px;"></div>
+    <div class="pawn" id="redpawn4" style="background-color:red;top:624px;left:255px;"></div>
+
+    <div class="pawn" id="greenpawn1" style="background-color:green;top:190px;left:56px;"></div>
+    <div class="pawn" id="greenpawn2" style="background-color:green;top:155px;left:90px;"></div>
+    <div class="pawn" id="greenpawn3" style="background-color:green;top:224px;left:90px;"></div>
+    <div class="pawn" id="greenpawn4" style="background-color:green;top:190px;left:125px;"></div>
+
+    <div class="pawn" id="yellowpawn1" style="background-color:yellow;top:73px;left:489px;"></div>
+    <div class="pawn" id="yellowpawn2" style="background-color:yellow;top:38px;left:523px;"></div>
+    <div class="pawn" id="yellowpawn3" style="background-color:yellow;top:107px;left:523px;"></div>
+    <div class="pawn" id="yellowpawn4" style="background-color:yellow;top:73px;left:558px;"></div>
+    
+    <div class="pawn" id="bluepawn1" style="background-color:blue;top:496px;left:606px;"></div>
+    <div class="pawn" id="bluepawn2" style="background-color:blue;top:462px;left:640px;"></div>
+    <div class="pawn" id="bluepawn3" style="background-color:blue;top:531px;left:640px;"></div>
+    <div class="pawn" id="bluepawn4" style="background-color:blue;top:496px;left:674px;"></div>
+    
+    <div id="board"></div>
+    <div id="dice">Awaiting game</div>
+    <div id="gameStatus"></div>
+    </div>
+</body>
+</html>
