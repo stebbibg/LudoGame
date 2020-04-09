@@ -5,16 +5,16 @@ let winner = false;
 
 const currentDelay = 0;
 
-const positions = [{x: 314, y: 683}, {x: 314, y: 633}, {x: 314, y: 583}, {x: 314, y: 538}, {x: 314, y: 490}, {x: 314, y: 441},
+const positions = [{x: 314, y: 683}, {x: 314, y: 633, homeSafe: "red"}, {x: 314, y: 583}, {x: 314, y: 538}, {x: 314, y: 490}, {x: 314, y: 441},
     {x: 277, y: 407, star: true}, {x: 231, y: 407}, {x: 183, y: 407}, {x: 135, y: 407, globe: true}, {x: 87, y: 407}, {x: 39, y: 407},
     {x: 39, y: 350, star: true}, {x: 39, y: 297}, 
-    {x: 87, y: 297}, {x: 135, y: 297}, {x: 183, y: 297}, {x: 231, y: 297}, {x: 277, y: 297},
+    {x: 87, y: 297, homeSafe: "green"}, {x: 135, y: 297}, {x: 183, y: 297}, {x: 231, y: 297}, {x: 277, y: 297},
     {x: 314, y: 266, star: true}, {x: 314, y: 214}, {x: 314, y: 166}, {x: 314, y: 118, globe: true}, {x: 314, y: 70}, {x: 314, y: 22},
     {x: 367, y: 22, star: true}, {x: 424, y: 22},   
-    {x: 424, y: 70}, {x: 424, y: 118}, {x: 424, y: 166}, {x: 424, y: 214}, {x: 424, y: 262},
+    {x: 424, y: 70, homeSafe: "yellow"}, {x: 424, y: 118}, {x: 424, y: 166}, {x: 424, y: 214}, {x: 424, y: 262},
     {x: 457, y: 297, star: true}, {x: 506, y: 297}, {x: 555, y: 297}, {x: 603, y: 297, globe: true}, {x: 651, y: 297},{x: 699, y: 297},
     {x: 699, y: 351, star:true}, {x: 699, y: 407}, 
-    {x: 651, y: 407}, {x: 603, y: 407}, {x: 555, y: 407}, {x: 506, y: 407},{x: 458, y: 407},
+    {x: 651, y: 407, homeSafe: "blue"}, {x: 603, y: 407}, {x: 555, y: 407}, {x: 506, y: 407},{x: 458, y: 407},
     {x: 424, y: 441, star: true}, {x: 424, y: 490}, {x: 424, y: 538}, {x: 424, y: 585, globe: true}, {x: 424, y: 635},{x: 424, y: 683},
     {x: 368, y: 683, star:true}];
 
@@ -25,6 +25,7 @@ const homeRuns = {red: [{x: 369, y: 635},{x: 369, y: 586},{x: 369, y: 538},{x: 3
 
 const ranges = // The start and end index in positions[]
     {blue: {start: 40, end: 38}, red:{start: 1, end: 51}, green:{start: 14, end: 12}, yellow: {start: 27, end: 25}};
+
 
 let onboard = [];
 
@@ -134,7 +135,6 @@ class LudoGame{
         const diceVal = this.throwDice(players[currentPlayer]);
         let player = this.chooseRandomPlayer(diceVal);
         if (diceVal !== 6){
-
             this.updateNextPlayer();
         }
         if (player === null){
@@ -205,7 +205,6 @@ class LudoGame{
 
     movePawn(pawn, val){
 
-    //    let currentPawn = findPawn(pawn);
         let currentPawn = findPawn(pawn.id);
         pawn = pawn.id;
         if (currentPawn.homerun === true){
@@ -219,7 +218,7 @@ class LudoGame{
         if (currentPos === "home"){
             newPos = ranges[color].start;
             currentPawn.firstValue = true;
-            onboard.push({...currentPawn})
+            onboard.push(currentPawn)
         }else{
             if ((currentPos + val > lastIndex) && (currentPos <= lastIndex) && (currentPawn.firstValue === false)){
                 newPos = lastIndex;
@@ -294,7 +293,8 @@ class LudoGame{
     checkCollision(pawn, pos,val){
         pawns.forEach(element => {
             if (element.pos === pos && (element.id !== pawn) && (element.homerun !== true)){
-                if (positions[pos].globe === true){
+                let enemyColor = element.id.substr(0,element.id.indexOf("pawn"));
+                if ((positions[pos].globe === true) || positions[pos].homeSafe === enemyColor){
                     if (val === 6){
                         this.sendHome(element.id);
                     }else{
