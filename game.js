@@ -1,9 +1,9 @@
 let gui = "on";
 let winner = false;
-
-// WHEN PLACED ON A STAR AND OTHER PAWNS MOVES FORWARD A WHOLE STAR IT IS NOT OUT
+let dice;
 
 const currentDelay = 0;
+let possibleS = [];
 
 const positions = [{x: 314, y: 683}, {x: 314, y: 633, homeSafe: "red"}, {x: 314, y: 583}, {x: 314, y: 538}, {x: 314, y: 490}, {x: 314, y: 441},
     {x: 277, y: 407, star: true}, {x: 231, y: 407}, {x: 183, y: 407}, {x: 135, y: 407, globe: true}, {x: 87, y: 407}, {x: 39, y: 407},
@@ -29,6 +29,8 @@ const ranges = // The start and end index in positions[]
 
 let onboard = [];
 
+let gameHistory = [];
+
 const homes = [
     {id: "redpawn1", home: {x: 187, y: 624}}, {id: "redpawn2", home: {x: 221, y: 590}},  
     {id: "redpawn3", home: {x: 221, y: 659}}, {id: "redpawn4", home: {x: 255, y: 624}},
@@ -51,7 +53,7 @@ let pawns = [
     {id: "bluepawn3", pos: "home", homerun: false, goal: false}, {id: "bluepawn4", pos: "home", homerun: false, goal: false}
 ]
 
-const players = ["red", "green", "blue", "yellow"];
+const players = ["red", "green", "yellow", "blue"];
 let currentPlayer = 3;
 
 class LudoGame{
@@ -86,6 +88,38 @@ class LudoGame{
         }
 
         console.log(res);
+    }
+
+    // Play until it is red's turn
+    playRound(){
+        while(1){
+            if (players[currentPlayer] === "red" || winner !== false)   break;
+            this.makeRandomMove();
+        }
+    }
+
+    playFast(){
+
+    }
+
+    getPossiblePlayers(color){
+        let possiblePlayers = [];
+        if (dice === 6){
+            for (let i = 0; i < 16; i++){    // only red pawns
+                if (pawns[i].goal !== true && pawns[i].id.substr(0, pawns[i].id.indexOf("pawn")) === color) possiblePlayers.push(pawns[i]);
+            }
+        }else{
+            for (let i = 0; i < onboard.length; i++){
+                if (onboard[i].id.substr(0, onboard[i].id.indexOf("pawn")) === color) possiblePlayers.push(onboard[i])
+            }
+        }
+    
+        for (let i = possiblePlayers.length - 1; i >= 0; i--){
+            if (this.checkIfOverlap(possiblePlayers[i], dice)) {
+                possiblePlayers.splice(i,1);
+            }
+        }
+        return possiblePlayers;
     }
 
     playRandomGame(){
@@ -138,12 +172,59 @@ class LudoGame{
             this.updateNextPlayer();
         }
         if (player === null){
+        //    gameHistory.push({color: (currentPlayer === 0 ? players[3] : players[currentPlayer - 1]), value: diceVal, madeMove: false})
             return;
         }
         this.movePawn(player,diceVal)
+    //    gameHistory.push({color: player.id.substr(0, player.id.indexOf("pawn")), value: diceVal, madeMove: player})
+    }
+
+    checkIfOverlap(currentPawn, diceVal){
+        const pawnColor = currentPawn.id.substr(0, currentPawn.id.indexOf("pawn"));
+        if (currentPawn.pos === "home"){
+            for (let i = 0; i < pawns.length; i++){
+                if (pawnColor !== pawns[i].id.substr(0, pawns[i].id.indexOf("pawn"))) continue;
+                if (pawns[i].pos === ranges[pawnColor].start && pawns[i].homerun === false){
+                    return true;
+                } 
+            }
+        }
+        let currentPos = currentPawn.pos
+        let newPos = currentPos + diceVal;
+        let justHitHomeRun = false;
+        if (newPos > ranges[pawnColor].end && (currentPos <= ranges[pawnColor].end) && currentPawn.homerun === false){
+            justHitHomeRun = true;
+            newPos = newPos - ranges[pawnColor].end - 1;
+            if (newPos === homeRuns[pawnColor].length) return false;
+        }
+        if (newPos >= positions.length) newPos = newPos - positions.length;
+
+        if (currentPawn.homerun === true){
+            if (newPos === homeRuns[pawnColor].length) return false;    // hit goal
+            else if (newPos > homeRuns[pawnColor].length) newPos = homeRuns[pawnColor].length - (newPos - homeRuns[pawnColor].length);  // Bounced off goal
+
+            for (let i = 0; i < pawns.length; i++){
+                if (pawnColor !== pawns[i].id.substr(0, pawns[i].id.indexOf("pawn")) || pawns[i].id === currentPawn.id) continue;
+                if (pawns[i].pos === newPos && pawns[i].homerun === true){
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        for (let i = 0; i < pawns.length; i++){
+            if (pawnColor !== pawns[i].id.substr(0, pawns[i].id.indexOf("pawn")) || pawns[i].id === currentPawn.id) continue;
+            if (newPos === pawns[i].pos){
+                if (pawns[i].homerun === justHitHomeRun){
+                    return true;
+                } 
+            }
+        }
+        return false;
     }
 
     chooseRandomPlayer(val){
+
         if (val === 6){
             const possibleValues = pawns.filter(function(result) {
                 return result.id.substr(0, result.id.indexOf("pawn")) === players[currentPlayer] && result.goal === false;
@@ -151,7 +232,15 @@ class LudoGame{
             if (possibleValues.length === 0){
                 return null;
             }
-            const randomElement = possibleValues[Math.floor(Math.random() * possibleValues.length)];
+
+            let allValues = possibleValues;
+            for (let i = allValues.length - 1; i >= 0; i--){
+                if (this.checkIfOverlap(allValues[i], val)) allValues.splice(i,1);
+            }
+
+            if (allValues.length === 0) {
+                return null};
+            const randomElement = allValues[Math.floor(Math.random() * allValues.length)];
             return randomElement;
         }else{
             let possibleValues = onboard.filter(function(result) {
@@ -160,14 +249,22 @@ class LudoGame{
             if (possibleValues.length === 0){
                 return null;
             }
-            const randomElement = possibleValues[Math.floor(Math.random() * possibleValues.length)];
+
+            let allValues = possibleValues;
+            for (let i = allValues.length - 1; i >= 0; i--){
+                if (this.checkIfOverlap(allValues[i], val)) allValues.splice(i,1);
+            }
+
+            if (allValues.length === 0) return null;
+
+            let randomElement = allValues[Math.floor(Math.random() * allValues.length)];
             return randomElement;
         }
     }
 
     throwDice(color){
         const diceValue = Math.floor(Math.random() * 6) + 1;
-
+        dice = diceValue;
         if (gui === "on"){
             let dice = document.getElementById('dice');
             dice.innerText = diceValue;
@@ -193,6 +290,8 @@ class LudoGame{
         if (gui === "on"){
             this.updateGraphics();
         }
+        currentPlayer = Math.floor(Math.random() * players.length);
+
     }
 
     updateNextPlayer(){
@@ -254,9 +353,25 @@ class LudoGame{
             onboard.splice(index,1);
             this.checkIfFinished(color);
         }else if (currentPawn.pos + val > homeRuns[color].length){
-            currentPawn.pos -= currentPawn.pos + val - homeRuns[color].length - 1;
+            let endPos = homeRuns[color].length - (currentPawn.pos + val - homeRuns[color].length);
+            for (let i = 0; i < pawns.length; i++){
+                let element = pawns[i];
+                if (element.pos === endPos && element.homerun === true && element.id.substr(0,element.id.indexOf("pawn")) === color && element.id !== pawn){
+                    this.sendHome(pawn);
+                    return;
+                }
+            }
+            currentPawn.pos = endPos;
         }else{
-            currentPawn.pos += val;
+            const endPos = currentPawn.pos + val;
+            for (let i = 0; i < pawns.length; i++){
+                let element = pawns[i];
+                if (element.pos === endPos && element.homerun === true && element.id.substr(0,element.id.indexOf("pawn")) === color && element.id !== pawn){
+                    this.sendHome(pawn);
+                    return;
+                }
+            }
+            currentPawn.pos = endPos;
         }
         this.updateGraphics();
     }
@@ -340,9 +455,17 @@ class LudoGame{
 
     sendHome(pawn){
         let thisPawn = findPawn(pawn);
-        thisPawn.pos = "home";
+        for (let i = 0; i < pawns.length; i++){
+            if (pawn === pawns[i].id){
+                pawns[i].pos = "home";
+                pawns[i].homerun = false;
+                delete pawns[i].firstValue;
+                break;
+            }
+        }
         const index = onboard.findIndex(el => el.id === thisPawn.id);
         onboard.splice(index,1);
+        this.updateGraphics();
     }
 
 }
