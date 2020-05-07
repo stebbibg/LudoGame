@@ -1,11 +1,8 @@
 class State{
     getState(pawnID, diceVal){
-        // More enemies behind in the start ???
-        // Less enemies front is active when knocked out enemy
-        // Pawn number not working
-        
         let currentState = {
             id: pawnID,
+            bouncedOffGoal: 0,
             friendPosBehind: [], 
             friendPosFront: [], 
             enemyPosBehind: [], 
@@ -88,7 +85,10 @@ class State{
 
         if (currentPawn.homerun === true){
             if (newPos === homeRuns[pawnColor].length) currentState.hitGoal = 1;
-            else if (newPos > homeRuns[pawnColor].length) newPos = homeRuns[pawnColor].length - (newPos - homeRuns[pawnColor].length);
+            else if (newPos > homeRuns[pawnColor].length){
+                newPos = homeRuns[pawnColor].length - (newPos - homeRuns[pawnColor].length);
+                currentState.bouncedOffGoal = 1;
+            }
         }
 
         if (isNaN(currentPawn.pos)){

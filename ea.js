@@ -1,19 +1,19 @@
 function evaluate(){
     currentPlayer = Math.floor(Math.random() * players.length);
-    let mutationRate = 0.005;//0.005;// 0.01;//.01;//.01;
+    let mutationRate = 0.002//.002;//0.005;// 0.01;//.01;//.01;
     gui = "off";
     var playGame = new LudoGame();
     var state = new State();
-    const noPopulations = 1000;
-    const noGenes = 11;
-    const noRounds = 200;
-    const breedingRate = 0.2//;0.1;//0.1;// 0.2;
+    const noPopulations = 100;
+    const noGenes = 13;
+    const noRounds = 1000;
+    const breedingRate = 0.1//;0.1;//0.1;// 0.2;
     var population = new Population(noPopulations, noGenes);
-    const noGenerations = 100;
+    const noGenerations = 60;
     for (let i = 0; i < noGenerations; i++){
         gameHistory = [];
 
-        let res = testRound(playGame, state, population, noPopulations,noRounds)
+        let res = testRound(playGame, state, population, noPopulations,noRounds,i, breedingRate, mutationRate)
         function compare( a, b ) {
             if ( a.res < b.res ) return -1;  
             if ( a.res > b.res ) return 1;
@@ -26,7 +26,7 @@ function evaluate(){
             avg += res[i].res;
         }
         avg = avg/res.length;
-        console.log("Generation: " + i + "  -  " + (Math.round(avg*100000)/1000) + "\% of games won")
+        console.log("Generation: " + i + "  - Average: " + (Math.round(avg*100000)/1000) + "\% - Best: " + res[res.length-1].res * 100+ "\%");
     //    const pooledData = poolPopulation(res);
      //   console.log(res)
         console.log(res[res.length - 1])
@@ -36,7 +36,6 @@ function evaluate(){
         updatePopulation(res, currentPop, newGenes);
         mutate(population, mutationRate)
         population.setPopulation(currentPop);
-
     }
 }
 
@@ -52,25 +51,6 @@ function updatePopulation(res, population, newGenes){
     for (let i = 0; i < newGenes.length; i++){
         population.push(newGenes[i])
     }
-}
-
-function poolPopulation(res){
-    /*
-    let pooledData = [];
-    let compareValue = res[0].res;  // The smallest value
-    let counter = 0;
-    while(compareValue === 0){
-        compareValue = res[counter].res;
-        counter++;
-    }
-    for (let i = 0; i < res.length; i++){
-        const noDuplicates = Math.round(res[i].res/compareValue)
-        for (let j = 0; j < noDuplicates; j++){
-            pooledData.push(res[i].gene);   
-        }
-    }
-    return pooledData;
-    */
 }
 
 function mutate(population, rate){
@@ -97,12 +77,19 @@ function breed(res, population, breedingRate){
         let gene1 = population[indx1.gene]
         let gene2 = population[indx2.gene]
         let newPawnGene = [];
+            console.log("BREED")
 
         for (let k = 0; k < 4; k++){
             const lastEl = newGenes.length - 1;
             newPawnGene.push({pawnDNA: [], pawnNo: k})
             for (let j = 0; j < gene1[k].pawnDNA.length; j++){
-                let randomGene = (Math.random() > 0.5 ? gene1[k].pawnDNA[j] : gene2[k].pawnDNA[j])
+                let randomGene;
+                // Randomly take a gene in 1% of the case
+                if (Math.random() > 0.01){
+                    randomGene = (Math.random() > 0.5 ? gene1[k].pawnDNA[j] : gene2[k].pawnDNA[j])
+                }else{
+                    randomGene = gene1[Math.floor(Math.random() * gene1.length)].pawnDNA[j];    // Take a random gene instead
+                }
             //    newPawnGene[lastEl].pawnDNA.push(randomGene)
                 newPawnGene[k].pawnDNA.push(randomGene);
             }
@@ -112,7 +99,7 @@ function breed(res, population, breedingRate){
     return newGenes;
 }
 
-function testRound(playGame, state, population, noPopulations, noRounds){
+function testRound(playGame, state, population, noPopulations, noRounds, iteration, breedingRate, mutationRate){
 
     let res = {red: 0, blue: 0, yellow: 0, green:0};
     let totalres = [];
@@ -147,12 +134,12 @@ function testRound(playGame, state, population, noPopulations, noRounds){
                 playGame.playRound();
                 if (winner !== false) break;
                 playGame.throwDice();
-     
                 makeRedMove(i);
                 while(dice === 6){
                     playGame.throwDice();
                     makeRedMove(i);
                 }
+                
                 if (winner !== false){
                 //    console.log("winner true")
                     break
@@ -177,9 +164,16 @@ function testRound(playGame, state, population, noPopulations, noRounds){
             }
             playGame.resetGame();
         }
-    
+    //    console.log(res)
         
+        const fs = require('fs')
+        const outputstring = iteration + " " + res.red + " " + res.green + " " + res.blue + " " + res.yellow + " " + breedingRate + " " + mutationRate +"\n";
+        fs.appendFileSync("results.txt", outputstring, (err) => {
+            if (err) console.log(err);
+
+        });
         totalres.push({res: res.red /(res.blue + res.yellow + res.green + res.red), gene: i});
+    //    allRes.push()
         res = {red: 0, blue: 0, yellow: 0, green:0};
     }
     return (totalres);
@@ -259,7 +253,10 @@ function choosePlayer(possibleStates, dna){
         // Scale the index
         if (possibleStates[i].moreEnemiesBehind === 1) index = index/dna[i].pawnDNA[8];
         if (possibleStates[i].atGlobe === 1) index = index/dna[i].pawnDNA[9];
-        index = index /dna[i].pawnDNA[10];  // Take into account which pawn it is
+        if (possibleStates[i].bouncedOfGoal === 1) index = index/dna[i].pawnDNA[10];
+        if (possibleStates[i].knockedOutAtGlobe === 1) index = index/dna[i].pawnDNA[11];
+
+        index = index /dna[i].pawnDNA[11];  // Take into account which pawn it is
 
     //    let flag = false;
         let flag = (Math.random() < 0.00001 ? true : false)
@@ -275,6 +272,6 @@ function choosePlayer(possibleStates, dna){
             console.log(index)
         }
     }
-//    return findPawn(possibleStates[Math.floor(Math.random() * possibleStates.length)].id)
+ //   return findPawn(possibleStates[Math.floor(Math.random() * possibleStates.length)].id)
     return findPawn(maxScore.player);
 }

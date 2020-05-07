@@ -59,6 +59,7 @@ let currentPlayer = 3;
 class LudoGame{
 
     playManyGames(){
+        // Method used only for testing
         const c = 10000000;
         let res = {green:0, red: 0, yellow: 0, blue: 0};
         for (let i = 0; i < c; i++){
@@ -92,14 +93,90 @@ class LudoGame{
 
     // Play until it is red's turn
     playRound(){
+        /*
         while(1){
             if (players[currentPlayer] === "red" || winner !== false)   break;
             this.makeRandomMove();
         }
+        */
+        while(1){
+            if (players[currentPlayer] === "red" || winner !== false) break;
+            if (players[currentPlayer] ===  "green"){
+                this.playDefensive("green");
+             //   this.makeRandomMove();
+            }
+            if (winner !== false) break;
+            if (players[currentPlayer] ===  "yellow"){
+            //    this.makeRandomMove();
+                this.playAgressive("yellow");
+            }
+            if (winner !== false) break;
+            if (players[currentPlayer] ===  "blue"){
+            //    this.makeRandomMove();
+                this.playFast("blue");
+            }
+        //    if (winner !== false) break;
+        //    this.makeRandomMove();
+        }
+
     }
 
-    playFast(){
+    playFast(color){
+        const diceVal = this.throwDice(players[currentPlayer]);
+        if (diceVal !== 6){
+            this.updateNextPlayer();
+        }
+        let states = new State();
+        const possiblePlayers = this.getPossiblePlayers(color)
+        if (possiblePlayers.size === 0) return;
+        for (let i = 0; i < possiblePlayers.length; i++){
+            const currentState = states.getState(possiblePlayers[i].id, diceVal);
+            if (currentState.pawnNumber === 0){
+                this.movePawn(findPawn(currentState.id),diceVal);
+            }
+        }
+    }
 
+    // Plays aggressive, if a pawn can knock out an enemy it is chosen. If that is not possible it tries to find a pawn that approaches the enemy
+    // Otherwise a pawn is chosen at random
+    playAgressive(color){
+        const diceVal = this.throwDice(players[currentPlayer]);
+        if (diceVal !== 6){
+            this.updateNextPlayer();
+        }
+        let states = new State();
+        let possiblePlayers = this.getPossiblePlayers(color)
+        possiblePlayers.sort(() => Math.random() - 0.5);        // Shuffle so the first element is random
+        if (possiblePlayers.length === 0) return;                 // No possible players, return
+        let chosen = {player: possiblePlayers[0].id, score: 0}; // 2 score for knocking out, 1 for approaching enemies. Default a random player
+        for (let i = 0; i < possiblePlayers.length; i++){
+            const currentState = states.getState(possiblePlayers[i].id, diceVal);
+            if (currentState.hitEnemy === 1){
+                chosen = {player: possiblePlayers[i].id, score: 2};
+            }else if (currentState.moreEnemiesFront === 1 && chosen.score < 2){
+                chosen = {player: possiblePlayers[i].id, score: 1};
+            }
+        }
+        this.movePawn(findPawn(chosen.player),diceVal);
+    }
+
+    playDefensive(color){
+        const diceVal = this.throwDice(players[currentPlayer]);
+        if (diceVal !== 6){
+            this.updateNextPlayer();
+        }
+        let states = new State();
+        let possiblePlayers = this.getPossiblePlayers(color)
+        possiblePlayers.sort(() => Math.random() - 0.5);        // Shuffle so the first element is random
+        if (possiblePlayers.length === 0) return;                 // No possible players, return
+        let chosen = {player: possiblePlayers[0].id, score: 0}; 
+        for (let i = 0; i < possiblePlayers.length; i++){
+            const currentState = states.getState(possiblePlayers[i].id, diceVal);
+            if (currentState.lessEnemiesBehind === 1){
+                chosen = {player: possiblePlayers[i].id, score: 1};
+            }
+        }
+        this.movePawn(findPawn(chosen.player),diceVal);
     }
 
     getPossiblePlayers(color){
