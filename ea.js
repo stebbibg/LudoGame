@@ -1,15 +1,15 @@
 function evaluate(){
     currentPlayer = Math.floor(Math.random() * players.length);
-    let mutationRate = 0.002//.002;//0.005;// 0.01;//.01;//.01;
+    let mutationRate = 0.005//.002;//0.005;// 0.01;//.01;//.01;
     gui = "off";
     var playGame = new LudoGame();
     var state = new State();
     const noPopulations = 100;
-    const noGenes = 13;
-    const noRounds = 1000;
-    const breedingRate = 0.1//;0.1;//0.1;// 0.2;
+    const noGenes = 14;
+    const noRounds = 500;
+    const breedingRate = 0.02//;0.1;//0.1;// 0.2;
     var population = new Population(noPopulations, noGenes);
-    const noGenerations = 60;
+    const noGenerations = 100;
     for (let i = 0; i < noGenerations; i++){
         gameHistory = [];
 
@@ -32,7 +32,7 @@ function evaluate(){
         console.log(res[res.length - 1])
         let currentPop = population.getPopulation();
     //    console.log(currentPop)
-        let newGenes = breed(res, currentPop, breedingRate);
+        let newGenes = breed(res, currentPop, breedingRate, mutationRate);
         updatePopulation(res, currentPop, newGenes);
         mutate(population, mutationRate)
         population.setPopulation(currentPop);
@@ -65,7 +65,7 @@ function mutate(population, rate){
     }
 }
 
-function breed(res, population, breedingRate){
+function breed(res, population, breedingRate, mutationRate){
     let noBreds = Math.round(res.length*breedingRate);
     let newGenes = [];
     for (let i = 0; i < noBreds; i++){
@@ -86,7 +86,8 @@ function breed(res, population, breedingRate){
                 let randomGene;
                 // Randomly take a gene in 1% of the case
                 if (Math.random() > 0.01){
-                    randomGene = (Math.random() > 0.5 ? gene1[k].pawnDNA[j] : gene2[k].pawnDNA[j])
+                    randomGene = Math.random()
+                //    randomGene = (Math.random() > 0.5 ? gene1[k].pawnDNA[j] : gene2[k].pawnDNA[j])
                 }else{
                     randomGene = gene1[Math.floor(Math.random() * gene1.length)].pawnDNA[j];    // Take a random gene instead
                 }
@@ -225,12 +226,13 @@ function choosePlayer(possibleStates, dna){
                     possibleStates[i].moreEnemiesFront,
                     possibleStates[i].lessEnemiesBehind,
                     possibleStates[i].atHome,
+                    possibleStates[i].justHitHomeRun,
                     1
                 ]
 
 
         let weights = [dna[i].pawnDNA[0], dna[i].pawnDNA[1], dna[i].pawnDNA[2], dna[i].pawnDNA[3], dna[i].pawnDNA[4], dna[i].pawnDNA[5],
-            dna[i].pawnDNA[6], dna[i].pawnDNA[7]];
+            dna[i].pawnDNA[6], dna[i].pawnDNA[7], dna[i].pawnDNA[8]];
         var len = weights.length;
         var sorted = [...weights];
     //    indices.sort(function (a, b) { return indices[a] < indices[b] ? -1 : indices[a] > indices[b] ? 1 : 0; });   // The indexes of the weights, sor
@@ -251,12 +253,12 @@ function choosePlayer(possibleStates, dna){
         }
 
         // Scale the index
-        if (possibleStates[i].moreEnemiesBehind === 1) index = index/dna[i].pawnDNA[8];
-        if (possibleStates[i].atGlobe === 1) index = index/dna[i].pawnDNA[9];
-        if (possibleStates[i].bouncedOfGoal === 1) index = index/dna[i].pawnDNA[10];
-        if (possibleStates[i].knockedOutAtGlobe === 1) index = index/dna[i].pawnDNA[11];
+        if (possibleStates[i].moreEnemiesBehind === 1) index = index/dna[i].pawnDNA[9];
+        if (possibleStates[i].atGlobe === 1) index = index/dna[i].pawnDNA[10];
+        if (possibleStates[i].bouncedOfGoal === 1) index = index/dna[i].pawnDNA[11];
+        if (possibleStates[i].knockedOutAtGlobe === 1) index = index/dna[i].pawnDNA[12];
 
-        index = index /dna[i].pawnDNA[11];  // Take into account which pawn it is
+        index = index /dna[i].pawnDNA[13];  // Take into account which pawn it is
 
     //    let flag = false;
         let flag = (Math.random() < 0.00001 ? true : false)
